@@ -145,22 +145,23 @@ const WelcomeWrapper = styled.div`
 const WelcomeLeft = styled.div`
   flex: 1.2;
   position: relative;
-  background: url("https://images.unsplash.com/photo-1504814532849-927632fab17d?auto=format&fit=crop&w=1600&q=80")
-    center/cover no-repeat;
+  background-image: url('/dashboard-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 16px;
-  padding: 1rem; /* 🔹 padding reduzido */
-  color: white;
+  padding: 1rem;
+  color: #000; 
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  justify-content: center; /* 🔹 centraliza verticalmente */
+  justify-content: flex-start;
 
   &::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
     border-radius: 16px;
   }
 
@@ -168,11 +169,12 @@ const WelcomeLeft = styled.div`
     position: relative;
     z-index: 1;
     margin: 0;
+    color: #191919; 
   }
 
   h2 {
     font-family: ${fonts.title};
-    font-size: 1.4rem; /* 🔹 menor */
+    font-size: 1.4rem;
     margin-bottom: 0.25rem;
   }
 
@@ -187,27 +189,30 @@ const WelcomeRight = styled.div`
   flex: 1;
   background: #8cd1cd;
   border-radius: 16px;
-  padding: 1rem; /* 🔹 padding reduzido */
-  color: #003333;
-  font-family: ${fonts.body};
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* 🔹 centraliza verticalmente */
+  justify-content: center;
 
-  h3 {
+  /* força todo texto interno a ficar preto */
+  color: #191919 !important;
+
+  h2, p {
+    margin: 0;
+    color: #191919 !important;
+  }
+
+  h2 {
     font-family: ${fonts.title};
-    font-size: 1.2rem; /* 🔹 menor */
-    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
   }
 
   p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.4;
-    margin: 0;
   }
 `;
-
 
 const Card = styled.div`
   background: ${colors.base};
