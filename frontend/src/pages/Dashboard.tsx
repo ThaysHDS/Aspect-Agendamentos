@@ -1,68 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import styled from "styled-components";
-import "react-calendar/dist/Calendar.css";
-import axios from "axios";
-import ScheduleModal from "./ScheduleModal";
+import 'react-calendar/dist/Calendar.css';
 import { colors, fonts } from "../styles/theme";
-
-/* ----------------------- Styled Components ----------------------- */
-
-const StyledCalendar = styled(Calendar)`
-  width: 90%;
-  max-width: 450px;
-  margin: 0 auto;
-  background-color: #f6fafd;
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  font-family: 'Poppins', sans-serif;
-
-  .react-calendar__tile {
-    border-radius: 8px;
-    transition: background 0.2s, color 0.2s;
-  }
-
-  .react-calendar__tile--now {
-    background: #e0f2ff;
-    font-weight: 600;
-    color: #0077cc;
-  }
-
-  .react-calendar__tile--active {
-    background: #0077cc;
-    color: white;
-  }
-
-  .react-calendar__navigation {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-
-    button {
-      color: #0077cc;
-      min-width: 44px;
-      background: none;
-      font-size: 1rem;
-      font-family: 'Poppins', sans-serif;
-
-      &:disabled {
-        opacity: 0.5;
-      }
-    }
-
-    .react-calendar__navigation__label {
-      font-weight: 600;
-      font-size: 1.1rem;
-      text-transform: capitalize;
-    }
-  }
-
-  .react-calendar__navigation button[aria-label*="Next year"],
-  .react-calendar__navigation button[aria-label*="Previous year"] {
-    display: none;
-  }
-`;
+import ScheduleModal from "./ScheduleModal"; 
+import { useApp } from "../context/AppContext";
 
 const Container = styled.div`
   display: flex;
@@ -127,21 +69,17 @@ const WelcomeTitle = styled.h1`
   margin: 0;
 `;
 
-/* ... mantém o código anterior até WelcomeWrapper ... */
-
-/* Container dos dois blocos */
 const WelcomeWrapper = styled.div`
   display: flex;
   width: 100%;
   gap: 1.5rem;
-  height: 220px; /* 🔹 altura reduzida pela metade */
+  height: 220px;
   @media (max-width: 768px) {
     flex-direction: column;
     height: auto;
   }
 `;
 
-/* Bloco esquerdo com imagem */
 const WelcomeLeft = styled.div`
   flex: 1.2;
   position: relative;
@@ -153,17 +91,9 @@ const WelcomeLeft = styled.div`
   padding: 1rem;
   color: #000; 
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-  }
 
   h2, p {
     position: relative;
@@ -184,7 +114,6 @@ const WelcomeLeft = styled.div`
   }
 `;
 
-/* Bloco direito colorido */
 const WelcomeRight = styled.div`
   flex: 1;
   background: #8cd1cd;
@@ -194,12 +123,11 @@ const WelcomeRight = styled.div`
   flex-direction: column;
   justify-content: center;
 
-  /* força todo texto interno a ficar preto */
-  color: #191919 !important;
+  color: #191919;
 
   h2, p {
     margin: 0;
-    color: #191919 !important;
+    color: #191919;
   }
 
   h2 {
@@ -240,19 +168,7 @@ const Button = styled.button<{ variant?: "primary" | "danger" }>`
   }
 `;
 
-/* ----------------------- Subcomponentes ----------------------- */
-
-const Accordion = ({
-  title,
-  isOpen,
-  toggle,
-  children,
-}: {
-  title: string;
-  isOpen: boolean;
-  toggle: () => void;
-  children: React.ReactNode;
-}) => (
+const Accordion = ({ title, isOpen, toggle, children }: { title: string; isOpen: boolean; toggle: () => void; children: React.ReactNode }) => (
   <AccordionSection>
     <AccordionHeader onClick={toggle}>
       {title} <span>{isOpen ? "-" : "+"}</span>
@@ -268,73 +184,26 @@ const ExamCard = ({ name, specialty }: { name: string; specialty: string }) => (
   </Card>
 );
 
-const AppointmentCard = ({
-  appointment,
-  onDelete,
-}: {
-  appointment: any;
-  onDelete: (id: number) => void;
-}) => (
+const AppointmentCard = ({ appointment, onDelete }: { appointment: any; onDelete: (id: number) => void }) => (
   <Card>
-    <strong>{appointment.examName}</strong> <br />
-    Data e Hora: {new Date(appointment.date).toLocaleString()} <br />
-    Observações: {appointment.notes || "-"} <br />
+    <strong>{appointment.exame?.nome || appointment.exameName}</strong> <br />
+    Data e Hora: {new Date(appointment.dataHora).toLocaleString()} <br />
+    Observações: {appointment.observacoes || "-"} <br />
     <Button variant="danger" onClick={() => onDelete(appointment.id)}>
       Excluir
     </Button>
   </Card>
 );
 
-/* ----------------------- Componente Principal ----------------------- */
-
-export default function Dashboard({
-  userId,
-  userName,
-}: {
-  userId: number;
-  userName: string;
-}) {
-  const [exams, setExams] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
+export default function Dashboard() {
+  const { exames, agendamentos, carregarExames, carregarAgendamentos, criarAgendamento, excluirAgendamento } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [open, setOpen] = useState({ exams: false, scheduling: false });
-  const hasLoaded = useRef(false);
 
   useEffect(() => {
-    if (hasLoaded.current) return;
-    hasLoaded.current = true;
-
-    const loadData = async () => {
-      try {
-        const [exRes, apptRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/exams"),
-          axios.get(`http://localhost:3000/api/appointments?userId=${userId}`),
-        ]);
-        setExams(exRes.data);
-        setAppointments(apptRes.data);
-      } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-      }
-    };
-
-    loadData();
-  }, [userId]);
-
-  const handleSaveAppointment = async (data: any) => {
-    await axios.post("http://localhost:3000/api/appointments", {
-      userId,
-      ...data,
-    });
-    const res = await axios.get(
-      `http://localhost:3000/api/appointments?userId=${userId}`
-    );
-    setAppointments(res.data);
-  };
-
-  const handleDelete = async (id: number) => {
-    await axios.delete(`http://localhost:3000/api/appointments/${id}`);
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
-  };
+    carregarExames();
+    carregarAgendamentos();
+  }, []);
 
   return (
     <Container>
@@ -344,8 +213,8 @@ export default function Dashboard({
           isOpen={open.exams}
           toggle={() => setOpen((p) => ({ ...p, exams: !p.exams }))}
         >
-          {exams.map((exam) => (
-            <ExamCard key={exam.id} name={exam.name} specialty={exam.specialty} />
+          {exames.map((exam) => (
+            <ExamCard key={exam.id} name={exam.nome} specialty={exam.especialidade} />
           ))}
         </Accordion>
 
@@ -355,20 +224,15 @@ export default function Dashboard({
           toggle={() => setOpen((p) => ({ ...p, scheduling: !p.scheduling }))}
         >
           <Button onClick={() => setShowModal(true)}>Adicionar Agendamento</Button>
-          {appointments.map((appt) => (
-            <AppointmentCard
-              key={appt.id}
-              appointment={appt}
-              onDelete={handleDelete}
-            />
+          {agendamentos.map((appt) => (
+            <AppointmentCard key={appt.id} appointment={appt} onDelete={excluirAgendamento} />
           ))}
         </Accordion>
       </Sidebar>
 
       <ContentArea>
-        <WelcomeTitle>Olá {userName}!</WelcomeTitle>
+        <WelcomeTitle>Olá!</WelcomeTitle>
 
-        {/* ✅ Novos blocos lado a lado */}
         <WelcomeWrapper>
           <WelcomeLeft>
             <h2>Bem-vindo de volta!</h2>
@@ -387,11 +251,11 @@ export default function Dashboard({
           </WelcomeRight>
         </WelcomeWrapper>
 
-        <StyledCalendar
+        <Calendar
           value={new Date()}
           tileContent={({ date }) => {
-            const dayAppointments = appointments.filter(
-              (a) => new Date(a.date).toDateString() === date.toDateString()
+            const dayAppointments = agendamentos.filter(
+              (a) => new Date(a.dataHora).toDateString() === date.toDateString()
             );
             return dayAppointments.length ? (
               <div style={{ fontSize: "0.75rem", color: colors.primary }}>
@@ -404,11 +268,12 @@ export default function Dashboard({
 
       {showModal && (
         <ScheduleModal
-          exams={exams}
+          exames={exames}
           onClose={() => setShowModal(false)}
-          onSave={handleSaveAppointment}
+          onSave={criarAgendamento}
         />
       )}
     </Container>
   );
 }
+

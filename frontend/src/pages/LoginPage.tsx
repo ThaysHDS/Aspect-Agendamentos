@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
+import { useApp } from "../context/AppContext";
 
-/* ===== 🎞️ Animações ===== */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -13,7 +13,6 @@ const fadeLogo = keyframes`
   to { opacity: 1; transform: scale(1); }
 `;
 
-/* ===== 🎨 Estilos com Theme ===== */
 const Background = styled.div`
   width: 100vw;
   height: 100vh;
@@ -136,26 +135,34 @@ const GlassContainer = styled.div`
   }
 `;
 
-/* ===== 🧠 Componente ===== */
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const { setUser } = useApp();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
       setError("");
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: senha }),
-    });
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: senha }),
+      });
 
       const data = await res.json();
+      console.log("Login bem-sucedido:", data);
 
       if (res.ok) {
-        console.log("Login bem-sucedido:", data);
+        // Backend retorna apenas token, então criamos o usuário manualmente
+        const user = { email }; // só com email, sem ID
+        setUser(user);
+
+        // Salva token no localStorage
+        localStorage.setItem("token", data.token);
+
         navigate("/dashboard");
       } else {
         setError(data.message || "Email ou senha inválidos");
@@ -170,43 +177,44 @@ export default function Login() {
       <GlassContainer>
         <img src="/logo.png" alt="Aspect Agendamentos" />
         <h2>Login</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin();
-            }}
-            style={{ width: "100%" }}
-          >
-            {error && <div className="error">{error}</div>}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
+          style={{ width: "100%" }}
+        >
+          {error && <div className="error">{error}</div>}
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username" 
-            />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+          />
 
-            <input
-              type="password"
-              placeholder="Senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              autoComplete="current-password" 
-            />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            autoComplete="current-password"
+          />
 
-            <div className="links">
-              <Link to="/forgot-password">Esqueci minha senha</Link>
-            </div>
-
-            <button type="submit">Entrar</button>
-          </form>
-
-          <div className="signup">
-            Não é membro? <Link to="/register">Cadastre-se</Link>
+          <div className="links">
+            <Link to="/forgot-password">Esqueci minha senha</Link>
           </div>
+
+          <button type="submit">Entrar</button>
+        </form>
+
+        <div className="signup">
+          Não é membro? <Link to="/register">Cadastre-se</Link>
+        </div>
       </GlassContainer>
     </Background>
   );
 }
+
 

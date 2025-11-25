@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { api } from "../api"; // importando a instância do Axios
+import { api } from "../api";
 
 interface Exame {
   id: number;
@@ -15,9 +15,19 @@ interface Agendamento {
   exame?: Exame;
 }
 
+interface User {
+  id: number;
+  nome: string;
+  email: string;
+}
+
 interface AppContextProps {
+  user: User | null;
+  setUser: (u: User | null) => void;
+
   exames: Exame[];
   agendamentos: Agendamento[];
+
   carregarExames: () => void;
   carregarAgendamentos: () => void;
   criarAgendamento: (dados: Omit<Agendamento, "id">) => void;
@@ -27,6 +37,7 @@ interface AppContextProps {
 const AppContext = createContext({} as AppContextProps);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [exames, setExames] = useState<Exame[]>([]);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
 
@@ -53,6 +64,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        user,
+        setUser,
         exames,
         agendamentos,
         carregarExames,
