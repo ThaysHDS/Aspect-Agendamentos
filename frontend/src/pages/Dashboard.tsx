@@ -168,6 +168,43 @@ const Button = styled.button<{ variant?: "primary" | "danger" }>`
   }
 `;
 
+const StyledCalendar = styled(Calendar)`
+  /* Cor dos números do calendário */
+  .react-calendar__tile {
+    color: #010101;
+  }
+
+  /* Cabeçalho dos dias (SEG TER QUA …) */
+  .react-calendar__month-view__weekdays__weekday {
+    color: #010101;
+    font-weight: 600;
+  }
+
+  /* NOME DO MÊS (Título) */
+  .react-calendar__navigation__label {
+    color: #010101;
+    font-weight: 700;
+  }
+
+  /* Botões de navegação (< e >) */
+  .react-calendar__navigation button {
+    color: #010101;
+  }
+
+  /* Dia selecionado */
+  .react-calendar__tile--active {
+    background: ${colors.secondary} !important;
+    color: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  /* Hover */
+  .react-calendar__tile:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 10px;
+  }
+`;
+
 const Accordion = ({ title, isOpen, toggle, children }: { title: string; isOpen: boolean; toggle: () => void; children: React.ReactNode }) => (
   <AccordionSection>
     <AccordionHeader onClick={toggle}>
@@ -251,12 +288,13 @@ export default function Dashboard() {
           </WelcomeRight>
         </WelcomeWrapper>
 
-        <Calendar
+        <StyledCalendar
           value={new Date()}
           tileContent={({ date }) => {
             const dayAppointments = agendamentos.filter(
               (a) => new Date(a.dataHora).toDateString() === date.toDateString()
             );
+
             return dayAppointments.length ? (
               <div style={{ fontSize: "0.75rem", color: colors.primary }}>
                 {dayAppointments.length} agendamento(s)
@@ -264,6 +302,7 @@ export default function Dashboard() {
             ) : null;
           }}
         />
+
       </ContentArea>
 
       {showModal && (
